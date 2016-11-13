@@ -28,11 +28,11 @@ The plugin will also automatically re-detect the PS3 remote after being in stand
 <u><b>3) Changelog</b></u>
 
 4.0.2:<br>
-Added support for 5 new BT buttons on 2011 PS3 remote:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. '-/--'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 'ChanUp'<br>
+Added support for 5 new BT buttons on 2011 PS3 remote:<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. '-/--'<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 'ChanUp'<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. 'ChanDown'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. 'InstantNext'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. 'InstantNext'<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5. 'InstantPrev'<br>
 
 4.0.3:<br>
@@ -41,20 +41,17 @@ Added Blu-Link Universal/PS3 Remote support (VID=0x609/PID=0x306).
 4.0.4:<br>
 Fix batteryLevel "out of range" error.
 
+4.0.5:<br>
+1. Modified batteryLevel so it outputs for every button press as a trigger. (You get it from every press interally anyway, might as well be able to use it)
+2. Modified "Get Battery Level" action so you get a trigger, not just a return value.
 """
 
 eg.RegisterPlugin(
     name = "PlayStation 3 Bluetooth Remote",
-    author = (
-        "Thierry Couquillou",
-        "Tim Delaney",
-        "Chris Heitkamp",
-        "Peter Mathiasson",
-        "Eric Hodgerson",
-    ),
+    author = "Thierry Couquillou, Tim Delaney, Chris Heitkamp, Peter Mathiasson, Eric Hodgerson",
     version = "4.0.4",
     kind = "remote",
-    guid = "{7224079E-1823-48B0-8ED6-30973BDDC96D}",
+    guid = "{7224079E-1823-48B0-8ED6-30973BDDC96D}",    
     url = "http://www.eventghost.org/forum/viewtopic.php?t=640",
     description = "Hardware plugin for the PS3 Bluetooth Remote (based on the HID code of Bartman)",
     canMultiLoad = True,
@@ -90,7 +87,8 @@ class Text:
         "low",
         "good",
         "almost full",
-        "full"
+        "full",
+        "Not detected yet, press a button on the remote and try again."
     ]
     eventsSettings = "Remote Events Settings"
     ps3Settings = "PS3 Remote Events Settings"
@@ -204,7 +202,7 @@ class HIDPS3(eg.PluginClass):
         self.text = Text
         self.thread = None
         self.PS3Remote = PS3Remote
-        self.batteryLevel = None
+        self.batteryLevel = 6
         self.AddAction(GetBatteryLevel)
 
     def RawCallback(self, data):
@@ -231,8 +229,8 @@ class HIDPS3(eg.PluginClass):
             if battery > 0x05:
                 raise PS3ParseError( 'battery level', '0-5', battery )
 
-            if( battery < 0x02 ):
-                eg.PrintNotice(
+            if( battery < 0x06 ):
+                eg.TriggerEvent(
                     'PS3 Remote: Battery Level: ' +
                         self.text.batteryLevel[battery]
                 )
@@ -657,4 +655,7 @@ class GetBatteryLevel(eg.ActionClass):
         or None, if no keypress received up to now"""
 
     def __call__(self):
+        eg.TriggerEvent(
+            'PS3 Remote: Battery Level: ' +
+            str(self.plugin.text.batteryLevel[self.plugin.batteryLevel]))
         return self.plugin.batteryLevel
